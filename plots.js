@@ -80,7 +80,7 @@ function createGraphs(barData,scatterData){
 function transposeArray(subject){
   let output = [];
   let subjectArray = Object.keys(subject).map(i => subject[i]);
-  for (let j=0; j < subjectArray[1].length; j++){
+  for (let j=0; j <= subjectArray[1].length; j++){
     var sample = [];
     for (let k=1; k < subjectArray.length; k++){
       sample.push(subjectArray[k][j]);
