@@ -10,6 +10,7 @@ function init() {
         .text(sample)
         .property("value", sample);
     });
+    
     // initialize the page with the first subjects data
     buildMetadata(sampleNames[0]);
     
@@ -20,15 +21,27 @@ function init() {
     let subjectData = sampleData.filter (sampleObj => sampleObj.id == sampleNames[0]);
     // get the array element so it's not an array of one
     let subject = subjectData[0];
+    
     // format the data
     let subjectTransposed = transposeArray(subject);
     let topTen = subjectTransposed.slice(0,10).reverse();
     
-    createGraphs(topTen,subject);
+    let metadata = data.metadata;
+    let resultArray = metadata.filter(sampleObj => sampleObj.id == sampleNames[0]);
+    let result = resultArray[0];
+    let washFreq = result.wfreq;
+    
+    let washArray = metadata.map(freq => freq.wfreq);
+    const washAverage = washArray.reduce((a, b) => a + b) / washArray.length;
+
+    createGraphs(topTen,subject,washFreq,washAverage);
   })
 }
 
-function createGraphs(barData,scatterData){
+function createGraphs(barData,scatterData,gaugeData,gaugeAvg){
+  //----------------------------------------
+  // Build Bar Chart
+  //----------------------------------------
   let bData = transposeArray(barData);
   let otcData = bData[0].map(i => 'OTC ' + i)
   console.log(bData)
@@ -51,6 +64,9 @@ function createGraphs(barData,scatterData){
 
   Plotly.newPlot("bar",data,layout);
 
+  //----------------------------------------
+  // Build Bubble Chart
+  //----------------------------------------
   let sample_values = scatterData.sample_values;
   let otu_ids = scatterData.otu_ids;
   let otu_labels = scatterData.otu_labels;
@@ -62,19 +78,42 @@ function createGraphs(barData,scatterData){
     mode: 'markers',
     marker: {
       size: sample_values,
-      color: otu_ids
-    },
+      color: otu_ids,
+      colorscale: 'Portland'
+    }
 
   };
   
   let data1 = [trace1];
   
   let layout1 = {
-    title: 'Bacteria in Belly Button',
-    showlegend: true
+    title: 'Bacteria in Belly Button'
   };
   
   Plotly.newPlot('bubble', data1, layout1);
+
+  //----------------------------------------
+  // Build Gauge Chart
+  //----------------------------------------
+  var data2 = [
+    {
+      domain: { x: [0, 1], y: [0, 1] },
+      value: gaugeData,
+      delta: { reference: gaugeAvg, relative: true},
+      title: { text: "Washes Per Week <br> compared to the average" },
+      type: "indicator",
+      mode: "number+delta"
+    }
+  ];
+  
+  var layout2 = { width: 600, 
+                height: 500, 
+                margin: { t: 0, b: 0 },
+                paper_bgcolor: '#f5f5dc',
+                plot_bgcolor: '#f5f5dc'
+              };
+
+  Plotly.newPlot('gauge', data2, layout2);
 }
 
 function transposeArray(subject){
@@ -99,10 +138,10 @@ function optionChanged(newSample) {
 
 function buildMetadata(sample) {
     d3.json("samples.json").then((data) => {
-      var metadata = data.metadata;
-      var resultArray = metadata.filter(sampleObj => sampleObj.id == sample);
-      var result = resultArray[0];
-      var PANEL = d3.select("#sample-metadata");
+      let metadata = data.metadata;
+      let resultArray = metadata.filter(sampleObj => sampleObj.id == sample);
+      let result = resultArray[0];
+      let PANEL = d3.select("#sample-metadata");
   
       PANEL.html("");
       PANEL.append("h6").text('ID: ' + result.id);
@@ -128,6 +167,11 @@ function buildCharts(sample) {
     let topTen = subjectTransposed.slice(0,10).reverse();
     let bData = transposeArray(topTen);
     let otcData = bData[0].map(i => 'OTC ' + i);
+
+    let metadata = data.metadata;
+    let resultArray = metadata.filter(sampleObj => sampleObj.id == sample);
+    let result = resultArray[0];
+    let washFreq = result.wfreq;
     
     let trace = {
       x: [bData[1]],
@@ -146,7 +190,14 @@ function buildCharts(sample) {
       text: [otu_labels]
     }
     Plotly.restyle("bubble", trace1);
-    });
+    
+
+    let trace2 = {
+      value: [washFreq]
+    }
+
+    Plotly.restyle("gauge", trace2);
+  });
 }
 
 init();

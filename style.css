@@ -1,0 +1,19 @@
+body {
+
+    color: #1d1d1d;
+    background-color: #f5f5dc
+}
+
+.jumbotron {
+    background-color: beige;
+    text-align: center;
+    border-width: thin;
+    border-style: solid;
+    border-color: black;
+}
+
+.well {
+    border-width: thin;
+    border-style: solid;
+    border-color: black;
+}
